@@ -63,7 +63,7 @@ criterion = nn.BCELoss()  # 이진 분류를 위한 Binary Cross Entropy Loss
 optimizer = optim.Adam(model.parameters(), lr=0.001)
 
 # 모델 훈련
-epochs = 2
+epochs = 5
 for epoch in range(epochs):
     for data, target in train_loader:
         optimizer.zero_grad()
@@ -74,6 +74,9 @@ for epoch in range(epochs):
 
     if (epoch + 1) % 10 == 0:
         print(f'Epoch {epoch + 1}, Loss: {loss.item()}')
+
+# 모델의 state_dict 저장
+torch.save(model.state_dict(), 'model_state_dict.pth')
 
 # 간단한 정확도 평가
 with torch.no_grad():
