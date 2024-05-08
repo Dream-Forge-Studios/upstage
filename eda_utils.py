@@ -14,7 +14,7 @@ def makingData(file_path):
                     break  # Exit the current team loop if a 0.0 value is found
                 if key != 'venue':   # 'venue' 정보는 prefix가 이미 구분함
                     prefix = 'away_' if team['venue'] == 0 else 'home_'
-                    # if key != 'win_rate_10':
+                    # if key != 'away_result':
                     #     game_data[prefix + key] = value
                     game_data[prefix + key] = value
         if not skip:
