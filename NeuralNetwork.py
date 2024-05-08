@@ -64,10 +64,11 @@ criterion = nn.BCELoss()  # 이진 분류를 위한 Binary Cross Entropy Loss
 optimizer = optim.Adam(model.parameters(), lr=0.001)
 
 # 모델 훈련
-epochs = 10
+epochs = 7
 train_losses = []
 test_losses = []
 test_accuracies = []
+test_accuracies_60 = []
 
 for epoch in range(epochs):
     train_epoch_loss = 0.0
@@ -83,50 +84,57 @@ for epoch in range(epochs):
     train_epoch_loss /= len(train_loader)  # 각 배치의 loss 평균을 구함
     train_losses.append(train_epoch_loss)  # 현재 epoch의 훈련 손실을 리스트에 추가
 
+    # torch.save(model.state_dict(), f'model_state_dict_{epoch + 1}.pth')
+
     # 테스트 데이터에 대한 손실과 정확도 계산
     with torch.no_grad():
         test_predictions = model(X_test)
         test_loss = criterion(test_predictions, y_test)
         test_losses.append(test_loss.item())  # 테스트 손실을 리스트에 추가
 
-        # test_predictions가 0.4 이하 또는 0.6 이상인 경우에만 정확도 계산에 포함
+        #전체 정확도
+        test_predicted_classes  = (test_predictions > 0.5).float()
+        test_accuracy = (test_predicted_classes.eq(y_test).sum() / len(y_test)).item()
+        test_accuracies.append(test_accuracy)  # 테스트 정확도를 리스트에 추가
+
+        #test_predictions가 0.4 이하 또는 0.6 이상인 경우에만 정확도 계산에 포함
         relevant_indices = ((test_predictions <= 0.4) | (test_predictions >= 0.6)).float()
         relevant_test_predictions = test_predictions * relevant_indices
         relevant_y_test = y_test * relevant_indices
         relevant_data_count = relevant_indices.sum().item()  # 0.4 이하 또는 0.6 이상인 데이터 개수 계산
         if relevant_data_count > 0:  # 해당 조건에 해당하는 데이터가 있을 때만 정확도 계산
-            test_accuracy = (relevant_test_predictions.round() == relevant_y_test).float().mean()
-            test_accuracies.append(test_accuracy.item())  # 테스트 정확도를 리스트에 추가
+            test_accuracy_60 = (relevant_test_predictions.round() == relevant_y_test).float().mean()
+            test_accuracies_60.append(test_accuracy_60.item())  # 테스트 정확도를 리스트에 추가
             print(
-                f'Epoch {epoch + 1}, Train Loss: {train_epoch_loss}, Test Loss: {test_loss}, Test Accuracy: {test_accuracy}, Relevant Data Count: {relevant_data_count}')
+                f'Epoch {epoch + 1}, Train Loss: {train_epoch_loss}, Test Loss: {test_loss}, Test Accuracy: {test_accuracy}, 60% Test Accuracy: {test_accuracy_60}, Relevant Data Count: {relevant_data_count}')
         else:
             print(
-                f'Epoch {epoch + 1}, Train Loss: {train_epoch_loss}, Test Loss: {test_loss}, Test Accuracy: No relevant data')
+                f'Epoch {epoch + 1}, Train Loss: {train_epoch_loss}, Test Loss: {test_loss}, Test Accuracy: {test_accuracy}, 60% Test Accuracy: No relevant data')
 
-print(
-            f'Epoch {epoch + 1}, Train Loss: {train_epoch_loss}, Test Loss: {test_loss}, Test Accuracy: {test_accuracy}')
-
-    # test_accuracy = (test_predicted_classes.eq(y_test).sum() / len(y_test)).item()
-        # test_accuracies.append(test_accuracy)  # 테스트 정확도를 리스트에 추가
-        #
-        # print(f'Epoch {epoch + 1}, Train Loss: {train_epoch_loss}, Test Loss: {test_loss}, Test Accuracy: {test_accuracy}')
-
-# Loss 그래프 그리기
-plt.plot(range(1, epochs + 1), train_losses, label='Training Loss')
-plt.plot(range(1, epochs + 1), test_losses, label='Test Loss')
-plt.xlabel('Epoch')
-plt.ylabel('Loss')
-plt.title('Training and Test Loss over Epochs')
-plt.legend()
-plt.show()
-
-# Accuracy 그래프 그리기
-plt.plot(range(1, epochs + 1), test_accuracies, label='Test Accuracy')
-plt.xlabel('Epoch')
-plt.ylabel('Accuracy')
-plt.title('Test Accuracy over Epochs')
-plt.legend()
-plt.show()
+# # Loss 그래프 그리기
+# plt.plot(range(1, epochs + 1), train_losses, label='Training Loss')
+# plt.plot(range(1, epochs + 1), test_losses, label='Test Loss')
+# plt.xlabel('Epoch')
+# plt.ylabel('Loss')
+# plt.title('Training and Test Loss over Epochs')
+# plt.legend()
+# plt.show()
+#
+# # Accuracy 그래프 그리기
+# plt.plot(range(1, epochs + 1), test_accuracies, label='Test Accuracy')
+# plt.xlabel('Epoch')
+# plt.ylabel('Accuracy')
+# plt.title('Test Accuracy over Epochs')
+# plt.legend()
+# plt.show()
+#
+# # Accuracy 그래프 그리기
+# plt.plot(range(1, epochs + 1), test_accuracies, label='60% Test Accuracy')
+# plt.xlabel('Epoch')
+# plt.ylabel('Accuracy')
+# plt.title('60% Test Accuracy over Epochs')
+# plt.legend()
+# plt.show()
 
 # 모델의 state_dict 저장
 # torch.save(model.state_dict(), 'model_state_dict.pth')

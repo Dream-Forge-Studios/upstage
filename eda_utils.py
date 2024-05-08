@@ -1,7 +1,10 @@
 import pandas as pd
 
 def makingData(file_path):
-    data = pd.read_json(file_path)
+    if type(file_path) == str:
+        data = pd.read_json(file_path)
+    elif type(file_path) == dict:
+        data = file_path
     # 데이터 프레임 생성
     rows = []
     for game_id, teams in data.items():
