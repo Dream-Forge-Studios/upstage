@@ -127,12 +127,39 @@ def statizCrawling(data):
             elif span.text == 'W':
                 wins += 1
         results[s_no_value][1]['win_rate_10'] = wins / (wins + losses)
+
+        # 최근 10경기 득점
+        score_10_temp = win_10_2.find_all('a')
+        score_10 = 0
+        conceded_10 = 0
+        for i in range(1, 56, 6):
+            temp = score_10_temp[i].text.split(':')
+            score_10 += int(temp[0])
+            conceded_10 += int(temp[1])
+        results[s_no_value][0]['score_10'] = score_10 / 10
+        results[s_no_value][0]['conceded_10'] = conceded_10 / 10
+
+        score_10_temp = win_10_3.find_all('a')
+        score_10 = 0
+        conceded_10 = 0
+        for i in range(1, 56, 6):
+            temp = score_10_temp[i].text.split(':')
+            score_10 += int(temp[0])
+            conceded_10 += int(temp[1])
+        results[s_no_value][1]['score_10'] = score_10 / 10
+        results[s_no_value][1]['conceded_10'] = conceded_10 / 10
+
+        # 점수 합계
+        score_sum_temp = soup.find('div', class_='num').find_all('span')
+        results[s_no_value].append({
+            'score_sum': int(score_sum_temp[0].text) + int(score_sum_temp[1].text)
+        })
     except:
         return False
 
     return results
 
-for year in ['2023', '2022', '2021', '2020']:
+for year in ['2018', '2017', '2016', '2015', '2014', '2013', '2012', '2011', '2010']:
     datas = {}
     with open(f'statuzGame_link_{year}.json', 'r', encoding='utf-8') as file:
         links = json.load(file)
@@ -142,5 +169,5 @@ for year in ['2023', '2022', '2021', '2020']:
         if results:
             datas.update(results)
 
-    with open(f'statuzGame_{year}.json', 'w', encoding='utf-8') as f:
+    with open(f'statuzGame_{year}_score_sum.json', 'w', encoding='utf-8') as f:
         json.dump(datas, f, ensure_ascii=False, indent=4)

@@ -46,9 +46,9 @@ def statizCrawling(year, mon):
     return results
 
 datas = []
-for i in range(5, 12):
-    results = statizCrawling(2023, i)
+for i in range(5, 11):
+    results = statizCrawling(2010, i)
     datas.extend(results)
 
-with open(f'statuzGame_link_2023.json', 'w', encoding='utf-8') as f:
+with open(f'statuzGame_link_2010.json', 'w', encoding='utf-8') as f:
     json.dump(datas, f, ensure_ascii=False, indent=4)
