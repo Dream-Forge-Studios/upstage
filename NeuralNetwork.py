@@ -58,7 +58,7 @@ class NeuralNetwork(nn.Module):
         return x
 
 # 모델 훈련
-epochs = 1
+epochs = 10
 train_losses = []
 test_losses = []
 test_accuracies = []
@@ -82,7 +82,7 @@ for random_state in [42, 11, 2, 6, 38]:
     # 모델 생성 및 파라미터 설정
     model = NeuralNetwork()
     criterion = nn.BCELoss()  # 이진 분류를 위한 Binary Cross Entropy Loss
-    optimizer = optim.Adam(model.parameters(), lr=0.001)
+    optimizer = optim.Adam(model.parameters(), lr=0.0001)
     for epoch in range(epochs):
         train_epoch_loss = 0.0
         for data, target in train_loader:

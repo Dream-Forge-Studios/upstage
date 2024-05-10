@@ -10,24 +10,38 @@ from eda_utils import makingData, statizCrawling
 import torch.nn.functional as F
 from sklearn.preprocessing import StandardScaler
 
-mean = np.array([4.76799399, 4.74804658, 4.15105184, 4.40785875, 4.77967693,
-       4.73557476, 4.76991736, 4.76381292, 4.11673929, 4.33831705,
-       4.76540195, 4.76435011, 9.48271976])
-scale = np.array([ 0.41122257,  0.38228446,  2.60566313, 12.19590315,  1.36730673,
-        1.33580807,  0.41098654,  0.38630744,  3.38815406, 10.94138304,
-        1.36323949,  1.43149017, 23.10695158])
+mean = np.array([5.06798191, 5.04829094, 4.48099303, 4.80324666, 5.1756548 ,
+       5.12924439, 5.06101564, 5.05881666, 4.45692858, 4.82904654,
+       5.14991521, 5.16668551])
+scale = np.array([ 0.48947377,  0.48481628,  3.087156  , 14.41574512,  1.71138018,
+        1.62494088,  0.48213828,  0.48131068,  3.75538883, 15.59527533,
+        1.65953033,  1.6966742 ])
 
 # 모델 아키텍처 정의
-class NeuralNetwork(nn.Module):
-    def __init__(self):
-        super(NeuralNetwork, self).__init__()
-        self.layer1 = nn.Linear(len(X.columns), 64)
-        self.relu = nn.ReLU()
-        self.layer2 = nn.Linear(64, len(score_sum_values))
+class RegressionWithUncertainty(nn.Module):
+    def __init__(self, input_features, num_classes):
+        super(RegressionWithUncertainty, self).__init__()
+        # 공통 레이어
+        self.fc1 = nn.Linear(input_features, 128)
+        self.fc2 = nn.Linear(128, 128)
+
+        # 회귀 출력
+        self.regression_output = nn.Linear(128, 1)
+
+        # 확률 출력 (분류 문제를 예로 들어)
+        self.probability_output = nn.Linear(128, num_classes)
+
     def forward(self, x):
-        x = self.relu(self.layer1(x))
-        x = self.layer2(x)
-        return x
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
+
+        # 회귀 값을 예측
+        regression = self.regression_output(x)
+
+        # 확률 값을 예측 (분류를 위한 softmax 적용)
+        probability = F.softmax(self.probability_output(x), dim=1)
+
+        return regression, probability
 
 
 urls = [
@@ -77,7 +91,7 @@ with open(file_path, "r") as f:
     score_sum_values = [float(line.strip()) for line in f]
 
 # 모델 초기화
-model = NeuralNetwork()
+model = RegressionWithUncertainty(12, len(score_sum_values))
 
 # 모델의 state_dict 로드
 model.load_state_dict(torch.load('model_state_dict_score.pth'))
@@ -88,13 +102,13 @@ model.eval()
 
 # 그라디언트 계산 비활성화
 with torch.no_grad():
-    test_predictions = model(input_tensor)
-    probabilities = F.softmax(test_predictions, dim=1)
+    regression_preds, probability_preds = model(input_tensor)
+    probabilities = F.softmax(probability_preds, dim=1)
     max_probabilities, predicted_classes = torch.max(probabilities, 1)
 
 for i in range(len(test_predictions)):
     # 결과 출력
-    print(f"{away_team[i]} : {home_team[i]} \n{predicted_classes[i]} {'{:.2f}'.format(max_probabilities[i])}%\n")
+    print(f"{away_team[i]} : {home_team[i]} \n{regression_preds[i]} {'{:.2f}'.format(max_probabilities[i])}%\n")
 
 
 
