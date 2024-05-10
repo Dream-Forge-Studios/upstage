@@ -18,53 +18,26 @@ scale = np.array([ 0.48947377,  0.48481628,  3.087156  , 14.41574512,  1.7113801
         1.65953033,  1.6966742 ])
 
 # 모델 아키텍처 정의
-class RegressionWithUncertainty(nn.Module):
-    def __init__(self, input_features, num_classes):
-        super(RegressionWithUncertainty, self).__init__()
-        # 공통 레이어
+class Regression(nn.Module):
+    def __init__(self, input_features):
+        super(Regression, self).__init__()
         self.fc1 = nn.Linear(input_features, 128)
         self.fc2 = nn.Linear(128, 128)
-
-        # 회귀 출력
         self.regression_output = nn.Linear(128, 1)
-
-        # 확률 출력 (분류 문제를 예로 들어)
-        self.probability_output = nn.Linear(128, num_classes)
-
     def forward(self, x):
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
-
-        # 회귀 값을 예측
         regression = self.regression_output(x)
 
-        # 확률 값을 예측 (분류를 위한 softmax 적용)
-        probability = F.softmax(self.probability_output(x), dim=1)
-
-        return regression, probability
+        return regression
 
 
 urls = [
-        'https://statiz.sporki.com/schedule/?m=preview&s_no=20240200',
-        # 'https://statiz.sporki.com/schedule/?m=preview&s_no=20240199',
-        # 'https://statiz.sporki.com/schedule/?m=preview&s_no=20240198',
-        # 'https://statiz.sporki.com/schedule/?m=preview&s_no=20240197',
-        # 'https://statiz.sporki.com/schedule/?m=preview&s_no=20240196',
-        # 'https://statiz.sporki.com/schedule/?m=preview&s_no=20240192',
-        # 'https://statiz.sporki.com/schedule/?m=preview&s_no=20240191',
-        # 'https://statiz.sporki.com/schedule/?m=preview&s_no=20240181',
-        # 'https://statiz.sporki.com/schedule/?m=preview&s_no=20240185',
-        # 'https://statiz.sporki.com/schedule/?m=preview&s_no=20240184',
-        # 'https://statiz.sporki.com/schedule/?m=preview&s_no=20240183',
-        # 'https://statiz.sporki.com/schedule/?m=preview&s_no=20240182',
-        # 'https://statiz.sporki.com/schedule/?m=preview&s_no=20240180',
-        # 'https://statiz.sporki.com/schedule/?m=preview&s_no=20240179',
-        # 'https://statiz.sporki.com/schedule/?m=preview&s_no=20240177',
-        # 'https://statiz.sporki.com/schedule/?m=preview&s_no=20240176',
-        # 'https://statiz.sporki.com/schedule/?m=preview&s_no=20240175',
-        # 'https://statiz.sporki.com/schedule/?m=preview&s_no=20240174',
-        # 'https://statiz.sporki.com/schedule/?m=preview&s_no=20240173',
-        # 'https://statiz.sporki.com/schedule/?m=preview&s_no=20240172',
+        'https://statiz.sporki.com/schedule/?m=preview&s_no=20240210',
+        'https://statiz.sporki.com/schedule/?m=preview&s_no=20240209',
+        'https://statiz.sporki.com/schedule/?m=preview&s_no=20240208',
+        'https://statiz.sporki.com/schedule/?m=preview&s_no=20240207',
+        'https://statiz.sporki.com/schedule/?m=preview&s_no=20240206',
         ]
 
 
@@ -91,24 +64,33 @@ with open(file_path, "r") as f:
     score_sum_values = [float(line.strip()) for line in f]
 
 # 모델 초기화
-model = RegressionWithUncertainty(12, len(score_sum_values))
+model_under = Regression(12)
+model_sum = Regression(12)
+model_over = Regression(12)
 
 # 모델의 state_dict 로드
-model.load_state_dict(torch.load('model_state_dict_score.pth'))
+model_under.load_state_dict(torch.load('model_score_sum_under.pth'))
+model_sum.load_state_dict(torch.load('model_score_sum.pth'))
+model_over.load_state_dict(torch.load('model_score_sum_over.pth'))
 
 
 # 모델을 평가 모드로 설정
-model.eval()
+model_under.eval()
+model_sum.eval()
+model_over.eval()
 
 # 그라디언트 계산 비활성화
 with torch.no_grad():
-    regression_preds, probability_preds = model(input_tensor)
-    probabilities = F.softmax(probability_preds, dim=1)
-    max_probabilities, predicted_classes = torch.max(probabilities, 1)
+    regression_preds_under = model_under(input_tensor)
+    regression_preds = model_sum(input_tensor)
+    regression_preds_over = model_over(input_tensor)
 
-for i in range(len(test_predictions)):
+for i in range(len(regression_preds_under)):
     # 결과 출력
-    print(f"{away_team[i]} : {home_team[i]} \n{regression_preds[i]} {'{:.2f}'.format(max_probabilities[i])}%\n")
+    print(f"{away_team[i]} : {home_team[i]} \n"
+          f"model_under: {regression_preds_under[i].item()} {regression_preds_under[i].item() - 2.8}\n"
+          f"model_sum: {regression_preds[i].item()} {regression_preds[i].item() + 3.6} {regression_preds[i].item() - 3.7} \n"
+          f"model_over: {regression_preds_over[i].item()} {regression_preds_over[i].item() + 5.4}\n\n")
 
 
 
