@@ -115,8 +115,8 @@ def combined_loss(regression_output, regression_target,
 
     # 총 손실 계산
     # total_loss = beta * regression_loss + (1 - beta) * probability_loss + penalty_weight * penalty
-    total_loss = regression_loss + penalty_weight * penalty
-    # total_loss = regression_loss
+    # total_loss = regression_loss + penalty_weight * penalty
+    total_loss = regression_loss
     return total_loss
 
 # 모델 훈련
@@ -178,7 +178,7 @@ for random_state in [42]:
             # max_probabilities, predicted_classes = torch.max(probabilities, 1)
 
             # 회귀 오차 계산
-            regression_errors = regression_predictions.squeeze() - y_test_regression.float()
+            regression_errors = (regression_predictions.squeeze() - 4) - y_test_regression.float()
             # mean_regression_error = torch.mean(torch.abs(regression_errors))
             mean_regression_error = trimmed_mean(torch.abs(regression_errors), trim_ratio=0.1)
 
@@ -206,11 +206,11 @@ for random_state in [42]:
             # mean_filtered_classification_error = torch.mean(filtered_classification_errors)
 
             print(
-                f'Epoch {epoch + 1}, Train Loss: {train_epoch_loss}, Test Regression Loss: {regression_loss}, Mean Regression Error: {mean_regression_error}, Mean Negative Error (predictions < true): {mean_negative_regression_errors}, Negative Error Count: {negative_count}, Positive Error Count: {positive_count}')
+                f'Epoch {epoch + 1}, Train Loss: {train_epoch_loss}, Test Regression Loss: {regression_loss}, Mean Regression Error: {mean_regression_error}, Mean Negative Error (predictions < true): {mean_negative_regression_errors}, Negative Error Count: {negative_count}, Positive Error Count: {positive_count}, under probability: {negative_count / (positive_count + negative_count)}')
 
-            # if mean_negative_regression_errors > max_negative_regression_error:
-            #     max_negative_regression_error = mean_negative_regression_errors
-            #     torch.save(model.state_dict(), 'model_score_sum.pth')
+            if mean_negative_regression_errors > max_negative_regression_error:
+                max_negative_regression_error = mean_negative_regression_errors
+                # torch.save(model.state_dict(), 'model_score_sum.pth')
 
             # if negative_count < min_negative_count:
             if negative_count > min_negative_count:

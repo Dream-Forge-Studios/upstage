@@ -49,7 +49,7 @@ for random_state in [38]:
     svm_model = SVC(kernel='rbf', probability=True)
     svm_model.fit(X_train_scaled, y_train)
 
-    dump(svm_model, 'svm_model_2015~2023.joblib')
+    # dump(svm_model, 'svm_model_2015~2023.joblib')
 
     # 성능 평가
     predictions = svm_model.predict(X_test_scaled)
@@ -59,8 +59,8 @@ for random_state in [38]:
     # 예측 확률을 구함
     probabilities = svm_model.predict_proba(X_test_scaled)
     # 홈 팀 승리에 대한 확률이 60% 이상이거나 40% 이하인 데이터만 필터링
-    high_threshold = 0.7
-    low_threshold = 0.3
+    high_threshold = 0.6
+    low_threshold = 0.4
     selected_indices = np.where((probabilities[:, 1] >= high_threshold) | (probabilities[:, 1] <= low_threshold))[0]
     print(f"Number of selected predictions: {len(selected_indices)}")
     filtered_labels_results.append(len(selected_indices))
@@ -81,8 +81,8 @@ accuracy_average = sum(accuracy_results) / len(accuracy_results)
 filtered_accuracy_average = sum(filtered_accuracy_results) / len(filtered_accuracy_results)
 filtered_labels_average = sum(filtered_labels_results) / len(filtered_labels_results)
 print("정확도:", accuracy_average)
-print("60% 정확도:", filtered_accuracy_average)
-print("개수:", filtered_labels_average)
+print("60% 이상 정확도:", filtered_accuracy_average)
+print("60% 이상 개수:", filtered_labels_average)
 
 # import matplotlib.pyplot as plt
 #

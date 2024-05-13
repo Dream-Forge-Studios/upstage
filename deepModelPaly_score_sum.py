@@ -6,9 +6,34 @@ from bs4 import BeautifulSoup
 import requests
 from urllib.parse import urlparse, parse_qs
 import re
-from eda_utils import makingData, statizCrawling
+from eda_utils import makingData, statizCrawling, randomAgent
 import torch.nn.functional as F
 from sklearn.preprocessing import StandardScaler
+def oneTeam():
+    ['away_score', 'away_conceded', 'away_ERA_all', 'away_ERA_30',
+     'away_score_10', 'away_conceded_10', 'home_score', 'home_conceded',
+     'home_ERA_all', 'home_ERA_30', 'home_score_10', 'home_conceded_10']
+    # wins / (wins + losses)
+    # 사용자 입력 데이터
+    target = {
+        'away_score': 3.68,
+        'away_conceded': 4.85,
+        'away_ERA_all': 2.85,
+        'away_ERA_30': 2.40,
+        'away_score_10': 4.0,
+        'away_conceded_10': 0.48,
+        'home_score': 5.42,
+        'home_conceded': 5.12,
+        'home_ERA_all': 1.57,
+        'home_ERA_30': 3.00,
+        'home_score_10': 4.0,
+        'home_conceded_10': 0.48,
+    }
+    # 리스트로 변환된 데이터를 배열로 변환
+    input_data = np.array([target[key] for key in sorted(target)])
+
+    return input_data
+
 
 mean = np.array([5.06798191, 5.04829094, 4.48099303, 4.80324666, 5.1756548 ,
        5.12924439, 5.06101564, 5.05881666, 4.45692858, 4.82904654,
@@ -31,14 +56,30 @@ class Regression(nn.Module):
 
         return regression
 
+user_agents = randomAgent()
+url = 'https://statiz.sporki.com/schedule/?year=2024&month=5'
+parsed_url = urlparse(url)
+query_params = parse_qs(parsed_url.query)
 
-urls = [
-        'https://statiz.sporki.com/schedule/?m=preview&s_no=20240210',
-        'https://statiz.sporki.com/schedule/?m=preview&s_no=20240209',
-        'https://statiz.sporki.com/schedule/?m=preview&s_no=20240208',
-        'https://statiz.sporki.com/schedule/?m=preview&s_no=20240207',
-        'https://statiz.sporki.com/schedule/?m=preview&s_no=20240206',
-        ]
+agent = random.choice(user_agents)
+
+headers = {
+    'User-Agent': agent
+}
+response = requests.get(url, headers=headers)
+response.encoding = 'utf-8'
+urls = []
+soup = BeautifulSoup(response.text, 'html.parser')
+day = '14'
+tds = soup.find_all('td')
+for td in tds:
+    try:
+        if td.find('span').text == day:
+            for a in td.find_all('a'):
+                urls.append('https://statiz.sporki.com' + a['href'])
+    except:
+        continue
+
 
 
 results = statizCrawling(urls)
@@ -57,40 +98,33 @@ scaler.scale_ = scale
 X_scaled = scaler.transform(X)
 input_tensor = torch.FloatTensor(X_scaled)
 
-file_path = "score_sum_values.txt"
-
-# 파일에서 데이터 읽어오기
-with open(file_path, "r") as f:
-    score_sum_values = [float(line.strip()) for line in f]
-
 # 모델 초기화
-model_under = Regression(12)
 model_sum = Regression(12)
-model_over = Regression(12)
 
 # 모델의 state_dict 로드
-model_under.load_state_dict(torch.load('model_score_sum_under.pth'))
 model_sum.load_state_dict(torch.load('model_score_sum.pth'))
-model_over.load_state_dict(torch.load('model_score_sum_over.pth'))
 
 
 # 모델을 평가 모드로 설정
-model_under.eval()
 model_sum.eval()
-model_over.eval()
 
 # 그라디언트 계산 비활성화
 with torch.no_grad():
-    regression_preds_under = model_under(input_tensor)
     regression_preds = model_sum(input_tensor)
-    regression_preds_over = model_over(input_tensor)
 
-for i in range(len(regression_preds_under)):
+for i in range(len(regression_preds)):
     # 결과 출력
     print(f"{away_team[i]} : {home_team[i]} \n"
-          f"model_under: {regression_preds_under[i].item()} {regression_preds_under[i].item() - 2.8}\n"
-          f"model_sum: {regression_preds[i].item()} {regression_preds[i].item() + 3.6} {regression_preds[i].item() - 3.7} \n"
-          f"model_over: {regression_preds_over[i].item()} {regression_preds_over[i].item() + 5.4}\n\n")
+          f"{regression_preds[i].item() + 4} 80% \n"
+          f"{regression_preds[i].item() + 3} 75% \n"
+          f"{regression_preds[i].item() + 2} 70% \n"
+          f"{regression_preds[i].item() + 1} 63% \n"
+          f"{regression_preds[i].item() } 57% \n"
+          f"{regression_preds[i].item() - 1} 48% \n"
+          f"{regression_preds[i].item() - 2} 39% \n"
+          f"{regression_preds[i].item() - 3} 32% \n"
+          f"{regression_preds[i].item() - 4} 24% \n"
+          f"========================================")
 
 
 

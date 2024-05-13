@@ -34,7 +34,8 @@ feature_names = X.columns
 accuracy_results = []
 filtered_accuracy_results = []
 filtered_labels_results = []
-for random_state in [42, 11, 2, 6, 38]:
+# for random_state in [42, 11, 2, 6, 38]:
+for random_state in [38]:
     # 데이터 분할
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_state)
 
@@ -57,7 +58,7 @@ for random_state in [42, 11, 2, 6, 38]:
     # 모델 학습
     rf_classifier.fit(X_train, y_train)
 
-    dump(rf_classifier, 'RandomForest_model.joblib')
+    # dump(rf_classifier, 'RandomForest_model.joblib')
 
     # 테스트 데이터에 대한 예측
     predictions = rf_classifier.predict(X_test)
@@ -94,5 +95,5 @@ accuracy_average = sum(accuracy_results) / len(accuracy_results)
 filtered_accuracy_average = sum(filtered_accuracy_results) / len(filtered_accuracy_results)
 filtered_labels_average = sum(filtered_labels_results) / len(filtered_labels_results)
 print("정확도:", accuracy_average)
-print("60% 정확도:", filtered_accuracy_average)
-print("개수:", filtered_labels_average)
+print("60% 이상 정확도:", filtered_accuracy_average)
+print("60% 이상 개수:", filtered_labels_average)

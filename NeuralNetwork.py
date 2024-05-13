@@ -64,7 +64,8 @@ test_losses = []
 test_accuracies = []
 test_accuracies_60 = []
 filtered_labels_results = []
-for random_state in [42, 11, 2, 6, 38]:
+# for random_state in [42, 11, 2, 6, 38]:
+for random_state in [38]:
     # 데이터 로드 및 전처리
     X, y, inputNum = load_and_preprocess_data()
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_state)
@@ -97,7 +98,7 @@ for random_state in [42, 11, 2, 6, 38]:
         train_epoch_loss /= len(train_loader)  # 각 배치의 loss 평균을 구함
         train_losses.append(train_epoch_loss)  # 현재 epoch의 훈련 손실을 리스트에 추가
 
-        torch.save(model.state_dict(), f'model_state_dict_{epoch + 1}_{random_state}_2015~2023.pth')
+        # torch.save(model.state_dict(), f'model_state_dict_{epoch + 1}_{random_state}_2015~2023.pth')
 
         # 테스트 데이터에 대한 손실과 정확도 계산
         with torch.no_grad():
@@ -132,8 +133,8 @@ accuracy_average = sum(test_accuracies) / len(test_accuracies)
 filtered_accuracy_average = sum(test_accuracies_60) / len(test_accuracies_60)
 filtered_labels_average = sum(filtered_labels_results) / len(filtered_labels_results)
 print("정확도:", accuracy_average)
-print("60% 정확도:", filtered_accuracy_average)
-print("개수:", filtered_labels_average)
+print("60% 이상 정확도:", filtered_accuracy_average)
+print("60% 이상 개수:", filtered_labels_average)
 
 
 # # Loss 그래프 그리기
