@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 import requests
 from urllib.parse import urlparse, parse_qs
 import re
-from eda_utils import makingData, statizCrawling, randomAgent
+from eda_utils import makingData, statizCrawling, randomAgent, mlbData
 import torch.nn.functional as F
 from sklearn.preprocessing import StandardScaler
 def oneTeam():
@@ -56,37 +56,40 @@ class Regression(nn.Module):
 
         return regression
 
-user_agents = randomAgent()
-url = 'https://statiz.sporki.com/schedule/?year=2024&month=5'
-parsed_url = urlparse(url)
-query_params = parse_qs(parsed_url.query)
+def urlsTake():
+    user_agents = randomAgent()
+    url = 'https://statiz.sporki.com/schedule/'
+    parsed_url = urlparse(url)
+    query_params = parse_qs(parsed_url.query)
 
-agent = random.choice(user_agents)
+    agent = random.choice(user_agents)
 
-headers = {
-    'User-Agent': agent
-}
-response = requests.get(url, headers=headers)
-response.encoding = 'utf-8'
-urls = []
-soup = BeautifulSoup(response.text, 'html.parser')
-day = '14'
-tds = soup.find_all('td')
-for td in tds:
-    try:
-        if td.find('span').text == day:
-            for a in td.find_all('a'):
-                urls.append('https://statiz.sporki.com' + a['href'])
-    except:
-        continue
+    headers = {
+        'User-Agent': agent
+    }
+    response = requests.get(url, headers=headers)
+    response.encoding = 'utf-8'
+    urls = []
+    soup = BeautifulSoup(response.text, 'html.parser')
+    day = '14'
+    tds = soup.find_all('td')
+    for td in tds:
+        try:
+            if td.find('span').text == day:
+                for a in td.find_all('a'):
+                    urls.append('https://statiz.sporki.com' + a['href'])
+        except:
+            continue
+    return urls
 
-
-
+urls = urlsTake()
 results = statizCrawling(urls)
-
 df = makingData(results)
-
 X = df.drop(['away_team', 'game_id', 'home_team', 'away_win_rate', 'home_win_rate', 'away_win_rate_10', 'home_win_rate_10'], axis=1)
+
+# results = mlbData('https://www.covers.com/sport/baseball/mlb/matchup/299763')
+# df = makingData(results)
+# X = df.drop(['away_team', 'game_id', 'home_team'], axis=1)
 
 away_team = df['away_team']
 home_team = df['home_team']

@@ -42,9 +42,6 @@ def mlbData(url):
 
     soup = BeautifulSoup(response.text, 'html.parser')
 
-    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()))
-    driver.get(url)
-
     s_no_value = url.split('/')[-1]
     results[s_no_value] = []
     results[s_no_value].append({
@@ -56,34 +53,46 @@ def mlbData(url):
     })
 
     # 팀명
-    results[s_no_value][0]['team'] = driver.find_element(By.XPATH, '/html/body/main/div/div[3]/div/div/section[1]/article/div[1]/table/tbody/tr[1]/td[1]/span').text
-    results[s_no_value][1]['team'] = driver.find_element(By.XPATH, '/html/body/main/div/div[3]/div/div/section[1]/article/div[1]/table/tbody/tr[2]/td[1]/span').text
+    results[s_no_value][0]['team'] = soup.find_all('span', class_='teamLogo-playerName')[0].text.replace('\n', '')
+    results[s_no_value][1]['team'] = soup.find_all('span', class_='teamLogo-playerName')[1].text.replace('\n', '')
 
     # 득점
-    results[s_no_value][0]['score'] = driver.find_element(By.XPATH, '/html/body/main/div/div[3]/div/div/section[1]/article/div[1]/table/tbody/tr[1]/td[5]').text
-    results[s_no_value][1]['score'] = driver.find_element(By.XPATH, '/html/body/main/div/div[3]/div/div/section[1]/article/div[1]/table/tbody/tr[2]/td[5]').text
+    results[s_no_value][0]['score'] = float(soup.find_all('td')[4].text)
+    results[s_no_value][1]['score'] = float(soup.find_all('td')[12].text)
 
     # 실점
-    results[s_no_value][0]['conceded'] = driver.find_element(By.XPATH, '/html/body/main/div/div[3]/div/div/section[1]/article/div[1]/table/tbody/tr[1]/td[6]').text
-    results[s_no_value][1]['conceded'] = driver.find_element(By.XPATH, '/html/body/main/div/div[3]/div/div/section[1]/article/div[1]/table/tbody/tr[2]/td[6]').text
+    results[s_no_value][0]['conceded'] = float(soup.find_all('td')[5].text)
+    results[s_no_value][1]['conceded'] = float(soup.find_all('td')[13].text)
 
-    # 최근 10경기 승률
-    driver.find_element(By.XPATH, '/html/body/main/div/div[3]/div/div/menu/button[2]').click()
-    temp = driver.find_element(By.XPATH, '/html/body/main/div/div[3]/div/div/section[3]/div[1]/div/div[1]/div[2]').text.split(
-        '-')
-    results[s_no_value][0]['win_rate_10'] = int(temp[0]) / (int(temp[0]) + int(temp[1]))
+    # 최근 10경기 득점
+    score_10_temp = soup.find_all('tbody')[2].find_all('a')
+    score_10 = 0
+    conceded_10 = 0
+    for i in range(1, 38, 4):
+        temp = score_10_temp[i].text.split('-')
+        score_10 += int(temp[0])
+        conceded_10 += int(temp[1])
     results[s_no_value][0]['score_10'] = score_10 / 10
     results[s_no_value][0]['conceded_10'] = conceded_10 / 10
 
-    driver.find_element(By.XPATH, '/html/body/main/div/div[3]/div/div/menu/button[3]').click()
-    temp = driver.find_element(By.XPATH, '/html/body/main/div/div[3]/div/div/section[4]/div[1]/div/div[1]/div[2]').text.split(
-        '-')
-    results[s_no_value][1]['win_rate_10'] = int(temp[0]) / (int(temp[0]) + int(temp[1]))
+    score_10_temp = soup.find_all('tbody')[4].find_all('a')
+    score_10 = 0
+    conceded_10 = 0
+    for i in range(1, 38, 4):
+        temp = score_10_temp[i].text.split('-')
+        score_10 += int(temp[0])
+        conceded_10 += int(temp[1])
+    results[s_no_value][1]['score_10'] = score_10 / 10
+    results[s_no_value][1]['conceded_10'] = conceded_10 / 10
 
-    last_10_tables = driver.find_elements(By.CLASS_NAME, 'last-10-table')
+    results[s_no_value][0]['ERA_30'] = float(soup.find_all('div', class_='record-value')[9].text)
+    results[s_no_value][1]['ERA_30'] = float(soup.find_all('div', class_='record-value')[12].text)
 
-    print()
-mlbData('https://www.covers.com/sport/baseball/mlb/matchup/299756')
+    results[s_no_value][0]['ERA_all'] = 2.79
+    results[s_no_value][1]['ERA_all'] = 2.30
+
+    return results
+
 def makingData(file_path):
     if type(file_path) == str:
         data = pd.read_json(file_path)
