@@ -71,7 +71,7 @@ def urlsTake():
     response.encoding = 'utf-8'
     urls = []
     soup = BeautifulSoup(response.text, 'html.parser')
-    day = '14'
+    day = '15'
     tds = soup.find_all('td')
     for td in tds:
         try:
